@@ -1,0 +1,1 @@
+Analyze error handling: feedback patterns, error states, recovery options, inline validation, helpful error messages.

@@ -1,0 +1,32 @@
+# Golden-set of real company URLs for the ICP-from-URL quality harness.
+#
+# Curated to span categories and to give the multi-page fetch something to
+# work with: each site has a discoverable pricing and/or about page, so a
+# healthy extraction should populate pricing_signals / competitors /
+# positioning in addition to the always-easy company / product keys.
+#
+# Run (in-cluster — the service has no external ingress; see eval_icp.py):
+#   uv run python scripts/eval_icp.py --base-url http://localhost:6303 \
+#       --urls-file scripts/icp_golden_sites.txt --license "$ICP_LICENSE"
+#
+# One URL per line; '#' starts a comment.
+
+# Dev tools / infra SaaS
+https://stripe.com
+https://linear.app
+https://vercel.com
+https://notion.so
+https://figma.com
+
+# Fintech / people ops
+https://ramp.com
+https://gusto.com
+
+# Data / developer platform
+https://datadoghq.com
+https://twilio.com
+https://airtable.com
+
+# Commerce / marketing
+https://shopify.com
+https://hubspot.com

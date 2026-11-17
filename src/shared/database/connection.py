@@ -1,0 +1,5 @@
+"""Database connection module — delegates to w2v_common."""
+
+from w2v_common.database.connection import close_engine, get_engine
+
+__all__ = ["close_engine", "get_engine"]

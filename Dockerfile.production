@@ -1,0 +1,113 @@
+# ============================================================================
+# PRODUCTION MULTI-STAGE DOCKERFILE FOR ANALYSIS_SERVICE
+# ============================================================================
+# Build context must be the w2v root (parent directory) so that
+# the w2v_common path dependency is accessible.
+# Port: 6303
+
+# ============================================================================
+# STAGE 1: DEPENDENCY BUILDER
+# ============================================================================
+ARG BASE_REGISTRY=docker.io
+FROM ${BASE_REGISTRY}/library/python:3.14-slim AS builder
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UV_SYSTEM_PYTHON=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir uv
+
+WORKDIR /app
+
+# Copy w2v_common (path dependency) alongside the service
+COPY w2v_common/ /w2v_common/
+
+COPY analysis_service/pyproject.toml analysis_service/uv.lock* ./
+
+RUN uv sync --frozen --no-dev --no-install-project || uv sync --no-dev --no-install-project
+
+COPY analysis_service/src/ ./src/
+
+RUN uv sync --frozen --no-dev || uv sync --no-dev
+
+# ============================================================================
+# STAGE 2: RUNTIME
+# ============================================================================
+FROM ${BASE_REGISTRY}/library/python:3.14-slim
+
+ARG BUILD_DATE="2026-03-10"
+ARG VERSION="0.1.0"
+
+LABEL org.opencontainers.image.title="Analysis Service"
+LABEL org.opencontainers.image.description="Unified website analysis microservice (critique, review, brand extraction, content analysis, redesign)"
+LABEL org.opencontainers.image.version="${VERSION}"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app \
+    PATH="/app/.venv/bin:${PATH}" \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    ca-certificates \
+    tzdata \
+    # WeasyPrint runtime deps (critique, review)
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf-2.0-0 \
+    libffi-dev \
+    fonts-liberation \
+    # Playwright/Chromium runtime deps (brand_extractor, redesign, critique)
+    libnss3 \
+    libatk-bridge2.0-0 \
+    libdrm2 \
+    libxkbcommon0 \
+    libgbm1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Non-root user
+RUN useradd --create-home -u 1000 --shell /sbin/nologin analysisservice && \
+    mkdir -p /app /app/logs /app/data && \
+    chown -R analysisservice:analysisservice /app
+
+WORKDIR /app
+
+# Copy virtual environment from builder
+COPY --from=builder --chown=analysisservice:analysisservice /app/.venv /app/.venv
+
+# Copy application code
+COPY --chown=analysisservice:analysisservice analysis_service/src/ ./src/
+COPY --chown=analysisservice:analysisservice analysis_service/alembic.ini ./alembic.ini
+
+# Verify core dependencies, install Playwright Chromium, and set up directories
+RUN python -c "import fastapi; import sqlalchemy; print('Dependencies OK')" && \
+    PLAYWRIGHT_BROWSERS_PATH=/home/analysisservice/.cache/ms-playwright \
+    python -m playwright install --with-deps chromium && \
+    mkdir -p /app/logs /app/data && \
+    chmod 755 /app/logs /app/data && \
+    chown -R analysisservice:analysisservice /app
+
+ENV PLAYWRIGHT_BROWSERS_PATH=/home/analysisservice/.cache/ms-playwright
+
+USER 1000:1000
+
+# ============================================================================
+# PORT: 6303 (Analysis Service)
+# ============================================================================
+EXPOSE 6303/tcp
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD ["curl", "-f", "http://localhost:6303/health"]
+
+# 2 worker(s)
+CMD ["sh", "-c", "alembic -c /app/alembic.ini upgrade head && python -m uvicorn src.asgi:app --host 0.0.0.0 --port 6303 --workers 2 --loop uvloop --http httptools"]

@@ -1,0 +1,5 @@
+# Each line is one vulnerability ID to skip during pip-audit.
+# Format: ID  # package date (reason)
+# Add only when no fix version exists upstream. Re-evaluate periodically.
+CVE-2026-49452  # weasyprint 2026-07-07 (no upstream fix for 68.x; HTML→PDF report render only, no arbitrary-URL input; re-evaluate when 68.2 ships)
+PYSEC-2026-3412  # weasyprint 2026-07-23 (advisory-DB re-id of the same 68.x HTML→PDF render issue; no upstream fix; server-side report render only, no untrusted-URL input; re-evaluate when 68.2 ships)

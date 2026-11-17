@@ -1,0 +1,1 @@
+Analyze mobile responsiveness: responsive indicators, touch-friendly design, viewport usage, media queries, flexible layouts.

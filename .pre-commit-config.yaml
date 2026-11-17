@@ -1,0 +1,110 @@
+# Pre-commit hooks
+# Install: pre-commit install -t pre-commit -t pre-push
+# Run all: pre-commit run --all-files
+
+repos:
+  # Ruff - extremely fast Python linter (replaces flake8, isort, etc.)
+  # Pinned to the version uv.lock resolves (0.17.2); 0.15.2 flagged BLE001 on
+  # code the project's own `uv run ruff check .` accepts.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.2
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        types_or: [python, pyi]
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  # Standard pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]  # Allow custom tags
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  # Dockerfile linting — the binary hook, not hadolint-docker: the Docker
+  # variant needs to pull ghcr.io/hadolint/hadolint:latest on every run.
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint
+        args: [--ignore, DL3008, --ignore, DL3013]  # Allow unpinned apt/pip
+
+  # Secret detection: the published tree ships no `.secrets.baseline` (it is
+  # estate-specific), so the detect-secrets hook is replaced by the betterleaks
+  # `secret-scan` job in `.github/workflows/ci-public.yml`.
+
+  # Type checking and tests
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty type checking
+        entry: uv run ty check .
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-commit]
+
+      # Fast local feedback for the two test-quality guards (assertion-free and
+      # shape-only tests), ported from w2v_orchestrator 2026-10-05. The GATES are
+      # tests/test_vacuous_test_guard.py and tests/test_shape_only_test_guard.py,
+      # which run in CI under the archetype's `uv run pytest tests/`; this hook is
+      # a convenience, not the enforcement point.
+      - id: no-vacuous-tests
+        name: no assertion-free or shape-only tests
+        entry: uv run python -m scripts.check_vacuous_tests
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-commit]
+
+      # MOVED OFF THE COMMIT PATH 2026-08-20 -- stages: [manual], not [pre-commit].
+      #
+      # This ran the ENTIRE suite on every commit (pass_filenames: false), single-process. On
+      # a shared dev box running ~36 Claude sessions that became the binding constraint on
+      # shipping: measured that day, load ~80-110 with swap near-full, and commits were being
+      # killed mid-hook -- one `git commit` was OOM-killed at exit 144 after the hook had run
+      # for 1h29m. jetsam takes the whole process group, so a retry loop in a detached shell
+      # does not survive either. The gate had stopped protecting main and was preventing
+      # anything from reaching it.
+      #
+      # CI already runs this same suite. The public workflow
+      # `.github/workflows/ci-public.yml` has a `pytest` step running
+      # `uv run pytest -q` on every push and PR, so CI runs the same tests/ tree
+      # that used to run here. This is the gate MOVING, not being removed.
+      #
+      # Still runnable deliberately:
+      #     pre-commit run pytest-unit --hook-stage manual --all-files
+      # Targeted checks on the lines you touched stay local and stay cheap:
+      #     uv run pytest tests/path/to/test_thing.py
+      - id: pytest-unit
+        name: pytest unit tests
+        entry: uv run pytest tests/ -v --tb=short -x
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [manual]
+      - id: bandit
+        name: bandit security scan
+        entry: uv run bandit -r src/ -ll -ii -c pyproject.toml
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: pip-audit
+        name: pip-audit security scan (uv-export → pip-audit)
+        entry: scripts/pip-audit.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+# Configuration for ci environments
+ci:
+  autofix_prs: false
+  autoupdate_schedule: monthly

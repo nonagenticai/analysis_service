@@ -1,0 +1,55 @@
+# Ruff config lives here (NOT pyproject.toml) on purpose: this heavy image's
+# Dockerfile does `COPY pyproject.toml uv.lock` before `uv sync`, so ANY edit to
+# pyproject.toml busts the dependency-install cache layer and forces a full
+# (multi-GB) reinstall. Keeping ruff config in ruff.toml leaves pyproject.toml
+# byte-identical to main, so the dep layer cache-hits and the build stays fast.
+# ruff.toml is never COPYed into the image (dev-only). See w2v typing guardrail.
+
+line-length = 100
+target-version = "py314"
+
+[lint]
+select = [
+    "E", "F", "I", "N", "W", "UP", "ANN", "B", "BLE", "A", "S", "C901",
+    "RUF", "RET", "SIM", "ASYNC", "PTH", "TID251",
+]
+ignore = [
+    "E501",
+    "B008",
+    # ASYNC240 (pathlib in async) requires anyio.Path refactor across
+    # production async paths; tracked as fleet-wide follow-up. Stat
+    # calls in async handlers are microsecond-fast, not a hotspot today.
+    "ASYNC240"
+]
+
+# uuid7 is the id standard (stdlib, py3.14). TID251 bans `uuid4` in production
+# code via ruff — enforced in CI (`ruff check .`), not only local pre-commit.
+[lint.flake8-tidy-imports.banned-api]
+"uuid.uuid4".msg = "uuid7 is the w2v id standard — use uuid.uuid7() (stdlib, py3.14)."
+
+[lint.per-file-ignores]
+"src/database/migrations/*" = ["I001", "ANN"]
+"src/asgi.py" = ["E402", "ANN401"]
+"tests/**/*.py" = ["S101", "S104", "S105", "S106", "S108", "ANN", "PTH", "ASYNC230", "ASYNC240", "SIM117", "TID251"]
+
+# ── ANN401 ratchet (see [tool.ruff.lint].ignore note) ─────────────────────────
+# These files still carry `Any` in a function signature. Do NOT add to this list.
+# When you type a file's seam with pydantic models, DELETE its line here — that
+# re-enables ANN401 for the file and locks the win in. Target: empty.
+"src/domains/analyze/services/analyzer_service.py" = ["ANN401"]
+"src/domains/analyze/services/context/enricher.py" = ["ANN401"]
+"src/domains/analyze/services/review_generator.py" = ["ANN401"]
+"src/domains/brand/brands_routes.py" = ["ANN401"]
+"src/domains/brand/services/css_parser.py" = ["ANN401"]
+"src/domains/brand/services/event_publisher.py" = ["ANN401"]
+"src/domains/brand/services/llm_brand_analyzer.py" = ["ANN401"]
+"src/domains/brand/stages/llm_analysis.py" = ["ANN401"]
+"src/domains/brand/stages/logo.py" = ["ANN401"]
+"src/domains/critique/services/critique_service/finalize.py" = ["ANN401"]
+"src/domains/critique/services/critique_service/helpers.py" = ["ANN401"]
+"src/domains/critique/services/critique_service/phases.py" = ["ANN401"]
+"src/domains/critique/services/scanners/seo/seo_llm.py" = ["ANN401"]
+"src/domains/cro/llm_judge.py" = ["ANN401"]
+"src/domains/icp/service.py" = ["ANN401"]
+"src/domains/review/services/review_service.py" = ["ANN401"]
+"src/shared/database/migrations/env.py" = ["ANN401"]

@@ -1,0 +1,1 @@
+"""Marketing scorecard scoring domain."""

@@ -1,0 +1,82 @@
+# Allowlist for scripts/ci/no-private-refs.sh — a security decision, not a convenience.
+#
+# One rule per line, `path/glob:pattern  # justification`. The glob matches the repo-relative
+# path; the pattern is an ERE matched against the whole `git grep` hit (`path:line:text`).
+# Blank lines and `#` comments are ignored. A justification is mandatory in review.
+#
+# ⛔ Do NOT add an entry to keep a real internal hostname, address or private repository path
+# in a public tree. Remove it instead. An entry is only for a string that *looks* private but
+# is not: a documented loopback example, a placeholder, or a term that collides with a rule.
+#
+# The guard and this file necessarily spell the patterns out; the guard excludes both from
+# its own scan. Everything else is scanned.
+#
+# No entries by default. An empty file that fails the build is the correct starting state.
+
+# ── the SSRF / private-range guard modules and their tests ───────────────────────────
+# These files ARE the guard: the .internal names and CGNAT addresses below are the
+# values the guard must REJECT, and the tests assert that rejection. They name no
+# host of any deployment — no estate host, no real IP (all real tailnet addresses
+# were replaced with generic 100.64.0.x placeholders). Precedent: w2v_common
+# tests/test_net_safe_fetch.py.
+src/domains/brand/security.py:\.internal([^A-Za-z0-9_(]|$)
+src/domains/brand/security.py:100\.64\.
+src/domains/critique/services/critique_service/helpers.py:\.internal([^A-Za-z0-9_(]|$)
+src/domains/critique/services/critique_service/helpers.py:100\.64\.
+src/domains/critique/services/scanners/security_scanner/__init__.py:\.internal([^A-Za-z0-9_(]|$)
+src/domains/critique/services/scanners/security_scanner/__init__.py:100\.64\.
+src/domains/critique/services/scanners/security_scanner/http_guard.py:\.internal([^A-Za-z0-9_(]|$)
+src/domains/critique/services/scanners/security_scanner/http_guard.py:100\.64\.
+src/domains/critique/services/scanners/security_scanner/network_checks.py:\.internal([^A-Za-z0-9_(]|$)
+src/domains/critique/services/scanners/security_scanner/network_checks.py:100\.64\.
+src/domains/critique/services/scanners/seo/geo.py:\.internal([^A-Za-z0-9_(]|$)
+src/domains/critique/services/scanners/seo/geo.py:100\.64\.
+src/domains/critique/services/scanners/seo/internal_linking_live.py:\.internal([^A-Za-z0-9_(]|$)
+src/domains/critique/services/scanners/seo/internal_linking_live.py:100\.64\.
+src/domains/critique/services/scheduler.py:\.internal([^A-Za-z0-9_(]|$)
+src/domains/critique/services/scheduler.py:100\.64\.
+src/domains/scorecards/fetch.py:\.internal([^A-Za-z0-9_(]|$)
+src/domains/scorecards/fetch.py:100\.64\.
+src/shared/security/external_process_target.py:\.internal([^A-Za-z0-9_(]|$)
+src/shared/security/external_process_target.py:100\.64\.
+src/shared/security/playwright_guard.py:\.internal([^A-Za-z0-9_(]|$)
+src/shared/security/playwright_guard.py:100\.64\.
+src/shared/security/url_validator.py:\.internal([^A-Za-z0-9_(]|$)
+src/shared/security/url_validator.py:100\.64\.
+tests/conftest.py:\.internal([^A-Za-z0-9_(]|$)
+tests/conftest.py:100\.64\.
+tests/dns_stub.py:\.internal([^A-Za-z0-9_(]|$)
+tests/dns_stub.py:100\.64\.
+tests/integration/test_playwright_ssrf_guard.py:\.internal([^A-Za-z0-9_(]|$)
+tests/integration/test_playwright_ssrf_guard.py:100\.64\.
+tests/unit/domains/brand/test_brand_ssrf_guard.py:\.internal([^A-Za-z0-9_(]|$)
+tests/unit/domains/brand/test_brand_ssrf_guard.py:100\.64\.
+tests/unit/domains/critique/test_redirect_chain_stop_is_reported.py:\.internal([^A-Za-z0-9_(]|$)
+tests/unit/domains/critique/test_redirect_chain_stop_is_reported.py:100\.64\.
+tests/unit/domains/critique/test_schedule_url_ssrf.py:\.internal([^A-Za-z0-9_(]|$)
+tests/unit/domains/critique/test_schedule_url_ssrf.py:100\.64\.
+tests/unit/domains/critique/test_security_scanner_body_cap.py:\.internal([^A-Za-z0-9_(]|$)
+tests/unit/domains/critique/test_security_scanner_body_cap.py:100\.64\.
+tests/unit/domains/critique/test_security_scanner_ssrf.py:\.internal([^A-Za-z0-9_(]|$)
+tests/unit/domains/critique/test_security_scanner_ssrf.py:100\.64\.
+tests/unit/domains/critique/test_target_url_ssrf.py:\.internal([^A-Za-z0-9_(]|$)
+tests/unit/domains/critique/test_target_url_ssrf.py:100\.64\.
+tests/unit/domains/critique/test_tool_adapters_ssrf.py:\.internal([^A-Za-z0-9_(]|$)
+tests/unit/domains/critique/test_tool_adapters_ssrf.py:100\.64\.
+tests/unit/domains/icp/test_icp_url_ssrf.py:\.internal([^A-Za-z0-9_(]|$)
+tests/unit/domains/icp/test_icp_url_ssrf.py:100\.64\.
+tests/unit/domains/scorecards/test_fetch_dns_pinning.py:\.internal([^A-Za-z0-9_(]|$)
+tests/unit/domains/scorecards/test_fetch_dns_pinning.py:100\.64\.
+tests/unit/shared/test_external_process_target.py:\.internal([^A-Za-z0-9_(]|$)
+tests/unit/shared/test_external_process_target.py:100\.64\.
+tests/unit/shared/test_playwright_guard_total.py:\.internal([^A-Za-z0-9_(]|$)
+tests/unit/shared/test_playwright_guard_total.py:100\.64\.
+tests/unit/shared/test_scrape_sinks_guarded.py:\.internal([^A-Za-z0-9_(]|$)
+tests/unit/shared/test_scrape_sinks_guarded.py:100\.64\.
+tests/unit/shared/test_ssrf_resolving_fetch_guard.py:\.internal([^A-Za-z0-9_(]|$)
+tests/unit/shared/test_ssrf_resolving_fetch_guard.py:100\.64\.
+tests/unit/shared/test_ssrf_tailnet_guard.py:\.internal([^A-Za-z0-9_(]|$)
+tests/unit/shared/test_ssrf_tailnet_guard.py:100\.64\.
+src/shared/security/url_validator.py:\.svc\.cluster\.local
+tests/unit/domains/icp/test_icp_url_ssrf.py:\.svc\.cluster\.local
+tests/unit/shared/test_ssrf_tailnet_guard.py:\.svc\.cluster\.local

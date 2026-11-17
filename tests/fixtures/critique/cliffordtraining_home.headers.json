@@ -1,0 +1,13 @@
+{
+  "server": "GitHub.com",
+  "content-type": "text/html; charset=utf-8",
+  "access-control-allow-origin": "*",
+  "cache-control": "max-age=600",
+  "x-proxy-cache": "MISS",
+  "x-github-edge-region": "fra",
+  "accept-ranges": "bytes",
+  "via": "1.1 varnish",
+  "x-cache": "MISS",
+  "x-cache-hits": "0",
+  "vary": "Accept-Encoding"
+}
