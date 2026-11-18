@@ -35,7 +35,7 @@ dependencies = [
     # --- HTML parsing ---
     # <4.15: 4.15.0 retyped Tag.find/find_all overloads so attrs={...}/string=... calls
     # (valid at runtime) fail ty with 22 invalid-argument-type errors. Lift once fixed upstream.
-    "beautifulsoup4>=4.14.0,<4.15",
+    "beautifulsoup4>=4.14.0,<4.16",
 
     "lxml>=6.1.0",
 
@@ -131,7 +131,7 @@ dev = [
 
     # <0.0.41: ty 0.0.41+ adds rules (create_app arg, sum overload, mixin attribute overrides, @asynccontextmanager AsyncIterator deprecation) that flag ~21 sites.
     # Dev-only type checker, no runtime/pip-audit impact; lift when the code is migrated.
-    "ty>=0.0.23,<0.0.41",
+    "ty>=0.0.23,<0.0.105",
 
     "fakeredis>=2.34.0",
 
