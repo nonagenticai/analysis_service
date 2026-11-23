@@ -131,7 +131,7 @@ dev = [
 
     # <0.0.41: ty 0.0.41+ adds rules (create_app arg, sum overload, mixin attribute overrides, @asynccontextmanager AsyncIterator deprecation) that flag ~21 sites.
     # Dev-only type checker, no runtime/pip-audit impact; lift when the code is migrated.
-    "ty>=0.0.23,<0.0.105",
+    "ty>=0.0.23,<0.0.108",
 
     "fakeredis>=2.34.0",
 
